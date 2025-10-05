@@ -1,0 +1,12 @@
+{
+  "name": "FB post",
+  "description": "An application to automatically add a logo to images, generate a post caption using AI, and prepare them for social media posting.",
+  "requestFramePermissions": [],
+  "functions": [
+    {
+      "path": "/api/generate-caption",
+      "method": "POST",
+      "file": "functions/api/generate-caption.ts"
+    }
+  ]
+}
