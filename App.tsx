@@ -11,6 +11,7 @@ const MAX_IMAGE_UPLOADS = 50;
 const App: React.FC = () => {
   const [mainImages, setMainImages] = useState<File[]>([]);
   const [logo, setLogo] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoPosition, setLogoPosition] = useState<LogoPosition>(LogoPosition.TopRight);
   const [logoScale, setLogoScale] = useState<number>(15); // Percentage of image width
   const [logoOpacity, setLogoOpacity] = useState<number>(90); // Percentage
@@ -38,6 +39,19 @@ const App: React.FC = () => {
       console.error("Failed to load data from localStorage", error);
     }
   }, []);
+
+  useEffect(() => {
+    if (!logo) {
+      setLogoPreview(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(logo);
+    setLogoPreview(objectUrl);
+    
+    // Cleanup function to revoke the object URL
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [logo]);
+
 
   const updateAndSavePages = () => {
     const validPages = facebookPages
@@ -233,7 +247,30 @@ const App: React.FC = () => {
               <h2 className="text-xl font-semibold mb-4 text-slate-800">1. Upload Your Assets</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FileInput label="Main Images" multiple onFilesSelected={handleMainImagesUpload} maxFiles={MAX_IMAGE_UPLOADS} />
-                <FileInput label="Logo" onFilesSelected={handleLogoUpload} />
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Logo</label>
+                  {logo && logoPreview ? (
+                    <div className="mt-1 relative group">
+                        <div className="flex items-center justify-center p-2 rounded-md border-2 border-dashed border-slate-300 bg-slate-50/50" style={{minHeight: '155px'}}>
+                           <img 
+                                src={logoPreview} 
+                                alt="Logo Preview" 
+                                className="max-h-full max-w-full object-contain"
+                                style={{ maxHeight: '120px' }}
+                            />
+                        </div>
+                        <button
+                            onClick={() => setLogo(null)}
+                            className="absolute -top-2 -right-2 p-1 bg-white text-slate-500 rounded-full shadow-md hover:bg-red-500 hover:text-white transition-all"
+                            aria-label="Remove logo"
+                        >
+                            <MinusCircleIcon className="w-6 h-6" />
+                        </button>
+                    </div>
+                  ) : (
+                    <FileInput onFilesSelected={handleLogoUpload} />
+                  )}
+                </div>
               </div>
             </div>
 
@@ -388,7 +425,7 @@ const App: React.FC = () => {
 
 // --- Helper Components ---
 
-const FileInput: React.FC<{ label: string; multiple?: boolean; onFilesSelected: (files: FileList) => void; maxFiles?: number; }> = ({ label, multiple = false, onFilesSelected, maxFiles }) => {
+const FileInput: React.FC<{ label?: string; multiple?: boolean; onFilesSelected: (files: FileList) => void; maxFiles?: number; }> = ({ label, multiple = false, onFilesSelected, maxFiles }) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -424,7 +461,7 @@ const FileInput: React.FC<{ label: string; multiple?: boolean; onFilesSelected: 
 
   return (
     <div>
-      <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+      {label && <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>}
       <div 
         onDragEnter={handleDragIn}
         onDragLeave={handleDragOut}
@@ -435,8 +472,8 @@ const FileInput: React.FC<{ label: string; multiple?: boolean; onFilesSelected: 
         <div className="space-y-1 text-center">
           <UploadIcon className="mx-auto h-12 w-12 text-slate-400" />
           <div className="flex text-sm text-slate-600">
-            <label htmlFor={`file-upload-${label}`} className="relative cursor-pointer bg-transparent rounded-md font-medium text-sky-600 hover:text-sky-500">
-                <input id={`file-upload-${label}`} type="file" className="sr-only" multiple={multiple} accept="image/*" onChange={handleChange} />
+            <label htmlFor={`file-upload-${label || 'logo'}`} className="relative cursor-pointer bg-transparent rounded-md font-medium text-sky-600 hover:text-sky-500">
+                <input id={`file-upload-${label || 'logo'}`} type="file" className="sr-only" multiple={multiple} accept="image/*" onChange={handleChange} />
                 <span>Upload file(s)</span>
             </label>
             <p className="pl-1">or drag and drop</p>
@@ -564,7 +601,7 @@ const SelectInput: React.FC<{
                 ))}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="http://www.w3.org/2000/svg" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-slate-400">
                     <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                 </svg>
             </div>
