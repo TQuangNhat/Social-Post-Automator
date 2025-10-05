@@ -6,7 +6,7 @@
     {
       "path": "/api/generate-caption",
       "method": "POST",
-      "file": "functions/api/generate-caption.ts"
+      "file": "api/generate-caption.ts"
     }
   ]
 }

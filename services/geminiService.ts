@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { CopywritingFramework } from "../types";
 
@@ -28,12 +29,13 @@ export const generatePostCaption = async (topic: string, framework: CopywritingF
   
   try {
     const frameworkInstruction = getFrameworkInstruction(framework);
-    const prompt = `Write an engaging and friendly Facebook post about "${topic}". ${frameworkInstruction} Include relevant hashtags. The post should be suitable for a general audience and kept concise, under 150 words.`;
-
+    
+    // FIX: Refactored to use systemInstruction for better prompt structure and context separation, following Gemini API best practices.
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: prompt,
+      contents: `Write a Facebook post about: "${topic}".`,
       config: {
+        systemInstruction: `You are an expert social media copywriter. You write engaging and friendly Facebook posts suitable for a general audience, keeping them concise and under 150 words. Always include relevant hashtags. ${frameworkInstruction}`,
         temperature: 0.7,
         topP: 1,
         topK: 1,
