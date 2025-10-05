@@ -104,14 +104,32 @@ const App: React.FC = () => {
           
           let x = 0;
           let y = 0;
-          const margin = canvas.width * 0.02; // 2% margin
+          // Use a 10% margin from each respective edge (width and height) for consistent spacing.
+          const marginX = canvas.width * 0.10; 
+          const marginY = canvas.height * 0.10;
 
           switch (logoPosition) {
-            case LogoPosition.TopLeft: x = margin; y = margin; break;
-            case LogoPosition.TopRight: x = canvas.width - logoWidth - margin; y = margin; break;
-            case LogoPosition.BottomLeft: x = margin; y = canvas.height - logoHeight - margin; break;
-            case LogoPosition.Center: x = (canvas.width - logoWidth) / 2; y = (canvas.height - logoHeight) / 2; break;
-            case LogoPosition.BottomRight: default: x = canvas.width - logoWidth - margin; y = canvas.height - logoHeight - margin; break;
+            case LogoPosition.TopLeft:
+              x = marginX;
+              y = marginY;
+              break;
+            case LogoPosition.TopRight:
+              x = canvas.width - logoWidth - marginX;
+              y = marginY;
+              break;
+            case LogoPosition.BottomLeft:
+              x = marginX;
+              y = canvas.height - logoHeight - marginY;
+              break;
+            case LogoPosition.Center:
+              x = (canvas.width - logoWidth) / 2;
+              y = (canvas.height - logoHeight) / 2;
+              break;
+            case LogoPosition.BottomRight:
+            default:
+              x = canvas.width - logoWidth - marginX;
+              y = canvas.height - logoHeight - marginY;
+              break;
           }
 
           ctx.globalAlpha = logoOpacity / 100;
@@ -601,7 +619,7 @@ const SelectInput: React.FC<{
                 ))}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="http://www.w3.org/2000/svg" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-slate-400">
                     <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                 </svg>
             </div>
