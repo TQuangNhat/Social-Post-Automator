@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { LogoPosition, CopywritingFramework, FacebookPage, SavedFacebookPage, GeneratedPost, AiProvider, OpenAIModel } from './types';
 import { generatePostCaption as generateWithGemini } from './services/geminiService';
@@ -119,11 +118,21 @@ const App: React.FC = () => {
     applyWatermark();
   }, [applyWatermark]);
 
-  const handleMainImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
+  const handleMainImagesUpload = (files: FileList) => {
     if (!files) return;
-    let selectedFiles = Array.from(files).slice(0, MAX_IMAGE_UPLOADS);
+    const selectedFiles = Array.from(files)
+        .filter(file => file.type.startsWith('image/'))
+        .slice(0, MAX_IMAGE_UPLOADS);
     setMainImages(selectedFiles);
+  };
+
+  const handleLogoUpload = (files: FileList) => {
+    if (!files || files.length === 0) {
+        setLogo(null);
+        return;
+    }
+    const logoFile = Array.from(files).find(file => file.type.startsWith('image/'));
+    setLogo(logoFile || null);
   };
 
   const handleGeneratePost = async () => {
@@ -223,8 +232,8 @@ const App: React.FC = () => {
             <div className="bg-white p-8 rounded-xl shadow-md transition-shadow hover:shadow-lg">
               <h2 className="text-xl font-semibold mb-4 text-slate-800">1. Upload Your Assets</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FileInput label="Main Images" multiple onChange={handleMainImagesChange} />
-                <FileInput label="Logo" onChange={e => setLogo(e.target.files ? e.target.files[0] : null)} />
+                <FileInput label="Main Images" multiple onFilesSelected={handleMainImagesUpload} maxFiles={MAX_IMAGE_UPLOADS} />
+                <FileInput label="Logo" onFilesSelected={handleLogoUpload} />
               </div>
             </div>
 
@@ -379,20 +388,65 @@ const App: React.FC = () => {
 
 // --- Helper Components ---
 
-const FileInput: React.FC<{ label: string; multiple?: boolean; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; }> = ({ label, multiple = false, onChange }) => (
-  <div>
-    <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
-    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-md hover:border-sky-500 transition-colors bg-slate-50/50">
-      <div className="space-y-1 text-center">
-        <UploadIcon className="mx-auto h-12 w-12 text-slate-400" />
-        <div className="flex text-sm text-slate-600">
-          <label htmlFor={`file-upload-${label}`} className="relative cursor-pointer bg-transparent rounded-md font-medium text-sky-600 hover:text-sky-500"><input id={`file-upload-${label}`} type="file" className="sr-only" multiple={multiple} accept="image/*" onChange={onChange} /><span>Upload file(s)</span></label>
-          <p className="pl-1">or drag and drop</p>
+const FileInput: React.FC<{ label: string; multiple?: boolean; onFilesSelected: (files: FileList) => void; maxFiles?: number; }> = ({ label, multiple = false, onFilesSelected, maxFiles }) => {
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragIn = (e: React.DragEvent) => {
+    handleDrag(e);
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragOut = (e: React.DragEvent) => {
+    handleDrag(e);
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    handleDrag(e);
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      onFilesSelected(e.dataTransfer.files);
+    }
+  };
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+        onFilesSelected(e.target.files);
+    }
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+      <div 
+        onDragEnter={handleDragIn}
+        onDragLeave={handleDragOut}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+        className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors bg-slate-50/50 ${isDragging ? 'border-sky-500 bg-sky-50' : 'border-slate-300 hover:border-sky-500'}`}
+      >
+        <div className="space-y-1 text-center">
+          <UploadIcon className="mx-auto h-12 w-12 text-slate-400" />
+          <div className="flex text-sm text-slate-600">
+            <label htmlFor={`file-upload-${label}`} className="relative cursor-pointer bg-transparent rounded-md font-medium text-sky-600 hover:text-sky-500">
+                <input id={`file-upload-${label}`} type="file" className="sr-only" multiple={multiple} accept="image/*" onChange={handleChange} />
+                <span>Upload file(s)</span>
+            </label>
+            <p className="pl-1">or drag and drop</p>
+          </div>
+          { maxFiles && multiple && <p className="text-xs text-slate-500">Up to {maxFiles} images</p>}
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const PositionSelector: React.FC<{ selected: LogoPosition; onSelect: (position: LogoPosition) => void; }> = ({ selected, onSelect }) => {
   const positions = Object.values(LogoPosition).map(p => ({ value: p, label: p.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) }));
